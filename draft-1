@@ -1,0 +1,264 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>David Baker Architects AI Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for the chat history */
+        .chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-history::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .chat-history::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Basic styling for user and bot messages */
+        .message-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            word-wrap: break-word; /* Ensure long words break */
+        }
+
+        .user-message {
+            background-color: #3B82F6; /* Blue-500 */
+            color: white;
+            align-self: flex-end; /* Align to right */
+        }
+
+        .bot-message {
+            background-color: #E5E7EB; /* Gray-200 */
+            color: #374151; /* Gray-700 */
+            align-self: flex-start; /* Align to left */
+        }
+
+        /* Centering the content */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #F3F4F6; /* Gray-100 */
+            margin: 0; /* Remove default body margin */
+            padding: 10px; /* Add some padding on smaller screens */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+
+        /* Adjust width for very small screens */
+        .w-full.max-w-md {
+            width: calc(100% - 20px); /* Account for body padding */
+        }
+
+        @media (min-width: 640px) { /* Tailwind's sm breakpoint */
+            .w-full.max-w-md {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans antialiased">
+    <div class="flex flex-col bg-white rounded-lg shadow-xl w-full max-w-md h-[70vh] min-h-[500px] overflow-hidden">
+        <!-- Chat Header -->
+        <div class="bg-gradient-to-r from-blue-700 to-sky-500 text-white p-4 rounded-t-lg shadow-md">
+            <h1 class="text-xl font-bold text-center flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                DBA AI Assistant
+            </h1>
+            <p class="text-sm text-center opacity-90 mt-1">Ask me about architectural concepts or David Baker Architects' approach.</p>
+            <p class="text-xs text-center opacity-80 mt-1 italic">
+                (e.g., "What is sustainable architecture?", "Tell me about urban housing design.")
+            </p>
+        </div>
+
+        <!-- Chat History Display Area -->
+        <div id="chat-history" class="flex-1 p-4 overflow-y-auto flex flex-col items-start chat-history">
+            <!-- Initial bot message will be populated by JS -->
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="hidden text-center p-2 text-gray-500">
+            <svg class="animate-spin h-5 w-5 mr-3 inline-block text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Thinking...
+        </div>
+
+        <!-- Message Input Area -->
+        <div class="p-4 border-t border-gray-200 flex items-center bg-gray-50 rounded-b-lg">
+            <input type="text" id="user-input" class="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="Type your message...">
+            <button id="send-button" class="ml-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-semibold shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const chatHistoryDiv = document.getElementById('chat-history');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+
+        // Initialize chat history with a system instruction for the LLM.
+        // This array holds the conversation turns (user and model messages)
+        // that are sent to the Gemini API to maintain context.
+        let chatHistory = [
+            {
+                role: "user",
+                parts: [{ text: "You are an AI assistant representing David Baker Architects. Your primary role is to provide general information about architectural concepts, design principles, sustainable practices, urban housing, and community-focused projects. You should answer questions about 'David Baker Architects' by stating that you are an AI and do not have access to specific, real-time, confidential, or proprietary company information like project details, client lists, or internal processes. You can, however, speak broadly about the firm's known areas of expertise, such as innovative housing, sustainable design, and community impact, based on publicly available general knowledge. Always maintain a professional, helpful, and informative tone." }]
+            },
+            {
+                role: "model",
+                parts: [{ text: "Hello! I'm an AI assistant for David Baker Architects. I can provide general information about architecture and our firm's known areas of expertise. How can I assist you today?" }]
+            }
+        ];
+
+        /**
+         * Adds a message bubble to the chat display.
+         * @param {string} text - The text content of the message.
+         * @param {string} sender - 'user' or 'bot' to determine styling and alignment.
+         */
+        function addMessage(text, sender) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+
+            if (sender === 'user') {
+                messageBubble.classList.add('user-message');
+                messageBubble.textContent = text;
+                chatHistoryDiv.appendChild(messageBubble);
+                messageBubble.style.alignSelf = 'flex-end'; // Align to right for user messages
+            } else { // sender === 'bot'
+                messageBubble.classList.add('bot-message');
+                messageBubble.textContent = text;
+                chatHistoryDiv.appendChild(messageBubble);
+                messageBubble.style.alignSelf = 'flex-start'; // Align to left for bot messages
+            }
+            // Scroll to the latest message to keep it in view
+            chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
+        }
+
+        /**
+         * Sends the user's message to the Gemini API and processes the response.
+         */
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return; // Don't send empty messages
+
+            addMessage(message, 'user'); // Add user's message to the display
+            userInput.value = ''; // Clear the input field
+
+            // Add user's message to the chat history for context
+            chatHistory.push({ role: "user", parts: [{ text: message }] });
+
+            // Show loading indicator and disable input/button during API call
+            loadingIndicator.classList.remove('hidden');
+            sendButton.disabled = true;
+            userInput.disabled = true;
+
+            try {
+                // Construct the payload for the Gemini API
+                const payload = {
+                    contents: chatHistory,
+                    // Optional: generationConfig allows fine-tuning model behavior
+                    // For example:
+                    // generationConfig: {
+                    //     temperature: 0.7, // Controls randomness: lower is more deterministic
+                    //     maxOutputTokens: 200, // Limits the length of the response
+                    // }
+                };
+
+                // The API key is automatically provided by the Canvas environment when left as an empty string.
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                // Make the API call to Gemini
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Check for HTTP errors
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorData.error.message || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+
+                // Process the API response
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const botResponseText = result.candidates[0].content.parts[0].text;
+                    addMessage(botResponseText, 'bot'); // Display bot's response
+                    // Add bot's message to the chat history for future context
+                    chatHistory.push({ role: "model", parts: [{ text: botResponseText }] });
+                } else {
+                    // Handle cases where the AI response is empty or malformed
+                    addMessage("Sorry, I couldn't get a valid response from the AI. Please try again.", 'bot');
+                }
+            } catch (error) {
+                // Log and display any errors during the API communication
+                console.error("Error communicating with Gemini API:", error);
+                addMessage(`An error occurred: ${error.message}. Please try again later.`, 'bot');
+            } finally {
+                // Hide loading indicator and re-enable input/button
+                loadingIndicator.classList.add('hidden');
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                userInput.focus(); // Return focus to the input field
+            }
+        }
+
+        // Event listener for the Send button click
+        sendButton.addEventListener('click', sendMessage);
+
+        // Event listener for the Enter key press in the input field
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initialize the chatbot display when the page loads
+        window.onload = () => {
+            // Display the initial bot message from the chatHistory array.
+            // We're checking the second element (index 1) because the first (index 0)
+            // is the system instruction.
+            if (chatHistory.length > 1 && chatHistory[1].role === "model") {
+                addMessage(chatHistory[1].parts[0].text, 'bot');
+            }
+            userInput.focus(); // Set initial focus to the input field
+        };
+    </script>
+</body>
+</html>
