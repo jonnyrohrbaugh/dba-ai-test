@@ -11,7 +11,8 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        // Ensure Roboto is the primary font for sans-serif, with fallbacks
+                        sans: ['Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
                     },
                 }
             }
@@ -87,10 +88,10 @@
         <!-- Chat Header -->
         <div class="bg-white text-black p-4 rounded-t-lg shadow-md flex flex-col items-center justify-center">
             <h1 class="text-xl font-bold text-center">
-                <!-- Logo Image - Increased height, w-auto for aspect ratio, removed rounded-full -->
+                <!-- Logo Image -->
                 <img src="https://www.dbarchitect.com/themes/custom/dbab5theme/logo.svg" alt="DBA Logo" class="h-16 w-auto object-contain mx-auto">
             </h1>
-            <!-- All subtext lines removed -->
+            <!-- All subtext previously here has been removed -->
         </div>
 
         <!-- Chat History Display Area -->
@@ -109,8 +110,8 @@
 
         <!-- Message Input Area -->
         <div class="p-4 border-t border-gray-200 flex items-center bg-gray-50 rounded-b-lg">
-            <input type="text" id="user-input" class="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="Type your message...">
-            <button id="send-button" class="ml-3 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-semibold shadow-md transition duration-200 ease-in-out transform hover:scale-105">
+            <input type="text" id="user-input" class="flex-1 px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm font-sans" placeholder="Type your message...">
+            <button id="send-button" class="ml-3 bg-gray-800 hover:bg-gray-900 text-white px-5 py-2 rounded-full font-semibold shadow-md transition duration-200 ease-in-out transform hover:scale-105 font-sans">
                 Send
             </button>
         </div>
@@ -191,13 +192,20 @@
                     // }
                 };
 
-                // The API key is automatically provided by the Canvas environment when left as an empty string.
+                // The API key for the Gemini model (used for chat generation).
                 // IMPORTANT: You MUST replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API key.
                 // Get your key from https://aistudio.google.com/app/apikey
-                const apiKey = "AIzaSyD_HD9sCOaR6wAbtq4QdGG8--WssO79ItQ"; 
-                console.log("Using API Key:", apiKey ? "Key provided" : "No key provided (check placeholder)"); // Added for debugging
+                const geminiApiKey = "AIzaSyD_HD9sCOaR6wAbtq4QdGG8--WssO79ItQ"; 
+                
+                // Placeholder for a second API key if you integrate with another service
+                // For example, if you build a backend that accesses Google Drive,
+                // that backend might have its own API key that your frontend would call.
+                const secondAPIKey = "AIzaSyADp0-PC366Ak8Fvng02TcEeO_spdaTk74"; 
 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                console.log("Using Gemini API Key:", geminiApiKey ? "Key provided" : "No key provided (check placeholder)"); 
+
+                // Use geminiApiKey for the Gemini API call
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
                 // Make the API call to Gemini
                 const response = await fetch(apiUrl, {
@@ -237,7 +245,7 @@
                 userInput.disabled = false;
                 userInput.focus(); // Return focus to the input field
             }
-            }
+        }
 
         // Event listener for the Send button click
         sendButton.addEventListener('click', sendMessage);
