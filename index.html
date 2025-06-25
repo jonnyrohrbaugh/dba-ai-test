@@ -193,16 +193,17 @@
                 };
 
                 // The API key for the Gemini model (used for chat generation).
-                // IMPORTANT: You MUST replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API key.
-                // Get your key from https://aistudio.google.com/app/apikey
-                const geminiApiKey = "AIzaSyD_HD9sCOaR6wAbtq4QdGG8--WssO79ItQ"; 
+                // ***********************************************************************
+                // IMPORTANT: You MUST replace "PASTE_YOUR_ACTUAL_GEMINI_API_KEY_HERE"
+                // with a valid, active API key from Google AI Studio.
+                // Go to https://aistudio.google.com/app/apikey to generate a fresh key.
+                // ***********************************************************************
+                const geminiApiKey = "AIzaSyADp0-PC366Ak8Fvng02TcEeO_spdaTk74"; 
                 
                 // Placeholder for a second API key if you integrate with another service
-                // For example, if you build a backend that accesses Google Drive,
-                // that backend might have its own API key that your frontend would call.
                 const secondAPIKey = "AIzaSyADp0-PC366Ak8Fvng02TcEeO_spdaTk74"; 
 
-                console.log("Using Gemini API Key:", geminiApiKey ? "Key provided" : "No key provided (check placeholder)"); 
+                console.log("Gemini API Key Status:", geminiApiKey && geminiApiKey !== "AIzaSyADp0-PC366Ak8Fvng02TcEeO_spdaTk74" ? "Key provided" : "WARNING: API Key is missing or default. Please update with a valid key from Google AI Studio."); 
 
                 // Use geminiApiKey for the Gemini API call
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
